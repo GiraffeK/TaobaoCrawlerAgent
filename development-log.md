@@ -1,153 +1,71 @@
 # TaobaoCrawlerAgent 開發歷程與決策日誌 (development-log.md)
 
-> **說明**：本文件依據《AI Agent 行動準則》規範建立，完整記錄專案生命週期中每一次接收 Prompt、AI 理解、思考決策、實作過程與歸檔狀態。當本文件長度超過 500 行或 50KB 時，將依照輪替機制將歷史內容封存至 `docs/logs/development-log-YYYYMMDD-HHMMSS.md`。
+> **說明**：本文件依據《AI Agent 行動準則》規範建立，完整記錄專案生命週期中每一次接收 Prompt、AI 理解、思考決策、實作過程與歸檔狀態。
+> **歷史歸檔通知**：
+> - 階段一至階段十四內容已封存至 `docs/logs/development-log-20261025-131755.md`。
+> - 階段十五至階段二十六內容已封存至 `docs/logs/development-log-20261025-202900.md`。
 
 ---
 
-## [2026-10-25 11:26] 階段一：專案基礎建設與初始架構建立
+## [2026-10-25 20:28] 階段二十七：根治「跳到 page2 後又跳回 page1」之 SPA 狀態中斷與重載問題
 
 ### 1. 使用者需求 (User Prompt)
-> 「請先幫我建一個專案名稱：TaobaoCrawlerAgent」
+> 「你好像跳到page2後又會跳回page1」
 
-### 2. AI 的理解與架構分析
-- 使用者要求建立名為 `TaobaoCrawlerAgent` 的專案。
-- 分析當前工作目錄為 `c:\Users\AdminSean\Coding\Personal\TaobaoCrawlerAgent`，已有本機 Python 3.14 環境。
-- 專案定位為「淘寶智慧商品爬蟲與分析 Agent」，需具備：
-  1. 瀏覽器自動化與持久化 Session (Playwright) 以因應淘寶反爬與登入機制。
-  2. 結構化資料模型 (Pydantic)。
-  3. CLI 操作界面 (Typer + Rich)。
-  4. 多格式資料匯出 (CSV/JSON)。
-  5. 結構化日誌 (Loguru)。
-  6. Git 版本控制與忽略規則。
+### 2. AI 深度排查與根本原因定位 (Root Cause Analysis)
+1. **問題回放與使用者視覺觀察**：
+   - 使用者清楚觀察到：瀏覽器畫面確實先點擊並跳轉至 Page 2，但片刻之後又刷新跳回了 Page 1。
+2. **根本原因剖析**：
+   - 在先前的 `_navigate_to_next_page` 邏輯中：
+     ```python
+     if target_clicked:
+         await asyncio.sleep(2.0)
+         is_active = await self.page.evaluate(...) # 檢查 .next-current 或 URL 是否已帶 page=2
+         if is_active:
+             return True
+         else:
+             # 假性失敗！觸發 URL fallback
+             await self.page.goto(url) # 破壞 SPA 狀態，硬重載回 page=1！
+     ```
+   - **痛點 A（SPA 動態過渡時間差）**：淘寶前端是 React/Rax SPA 單頁應用，點擊頁碼 `2` 後發起 AJAX 非同步請求，商品卡片與底部分頁按鈕重新渲染需要 2.5~3.5 秒。在第 2 秒進行 DOM 檢查時往往尚未渲染完成，導致 `is_active` 回傳 `False`。
+   - **痛點 B（全頁重載引發前端路由重置）**：一旦 `is_active` 為 `False`，腳本立即執行 `self.page.goto(url)`。而淘寶 PC 端搜尋頁對帶有一長串複雜篩選參數的冷啟動 HTTP GET 請求，其前端 Router 在首次載入時往往會初始化並重定向回 `page=1&s=0`！
+   - 這正是使用者看到「先跳到 page 2、隨後又被刷新回 page 1」的元兇！
 
-### 3. 思考與解決方案
-- 建立標準現代 Python 專案目錄，分離 `src/` 核心代碼、`data/` 資料儲存、`tests/` 測試模組。
-- 設定 `.gitignore` 排除虛擬環境、敏感憑證與 `data/sessions`（避免 Cookie 外洩）。
-- 建立 CLI 入口 `main.py`，內建 `login`（掃碼登入保存 Session）與 `search`（商品爬取與比價分析）命令。
-
-### 4. 具體產出檔案
-- `pyproject.toml` & `requirements.txt`
-- `.gitignore` & `.env.example`
-- `main.py`
-- `src/taobao_crawler_agent/`：
-  - `config.py`、`models.py`
-  - `crawler/` (`browser.py`, `search.py`, `parser.py`)
-  - `agent/` (`core.py`)
-  - `storage/` (`exporter.py`)
-  - `utils/` (`logger.py`)
-- `tests/test_basic.py`
-- `README.md`
-- Git 初始提交：`f33df2b feat: initialize TaobaoCrawlerAgent project structure`
-
----
-
-## [2026-10-25 11:34] 階段二：建立 AI Agent 行動準則與履約系統架構
-
-### 1. 使用者需求 (User Prompt)
-> 當我請AI Agent寫程式時，也請附上此附件，做為AI Agent的行動準則，以下請AI Agent遵守：
-> 1. 接受 user prompt 後必讀規範，任務結束時主動告知並證明遵守，末尾附標準履約查核標籤。
-> 2. 全程記錄程式開發過程至 `development-log.md`，過長時輪替歸檔至 `docs/logs/`。
-> 3. 建立 `Bulletin.json` 作為外部支援公告欄，疊加任務支援需求並完成狀態閉環。
-> 4. 授權 workspace 內檔案管理不用再問，但嚴禁修改/刪除 `.git/`、模型權重目錄（如 `C:\models\`）及敏感憑證金鑰。
-> 5. 終端機防彈原則（寫入 `.antigravityrules`）：
->    a. 禁止終端機進行檔案與字串搜尋（禁止 Select-String, Get-ChildItem, git grep），改用內建原生工具。
->    b. 任何單行測試、查詢或環境檢查一律覆寫至 `test_safe_command.py` 後執行 `python test_safe_command.py`，禁止在終端跑單行指令。
-> 6. 開放對話修改此文件使之更完整。
-
-### 2. AI 的理解與分析
-- 使用者要求建立一套嚴謹的 Agent 行動準則 (Guardrails & Auditability)，旨在：
-  - 確保開發透明度（全過程可溯源）。
-  - 減少權限中斷干擾（規範化終端機指令以防止安全彈窗干擾流暢度）。
-  - 建立跨工具/Agent/MCP 協作的標準溝通總線（`Bulletin.json`）。
-  - 明確安全性邊界（保護 `.git/`、本機權重、金鑰）。
-  - 自我審計證明（每輪對話標明規範遵循狀態）。
-
-### 3. 思考與實作步驟
-1. **建立 `Bulletin.json`**：設計具備 `version`、`description` 及 `bulletins` 列表的結構，支援 timestamp、請求類型、說明、狀態與閉環解法。
-2. **建立 `development-log.md`**：正式建立本開發日誌，詳細記載當前與先前的 prompt 與思考過程，建立 `docs/logs/` 輪替路徑。
-3. **建立 `test_safe_command.py`**：提供安全執行的樣板腳本，避免終端單行執行觸發不必要的中斷。
-4. **檢查並同步 `.antigravityrules`**：確保系統級規則包含 5a (禁止終端機搜尋) 與 5b (單行查詢轉移至 test_safe_command.py)。
-5. **落實履約證明查核標籤**：於每則回覆末尾生成包含 6 項準則遵循狀態的 Markdown 標籤塊。
+### 3. 實作重構與解決方案
+1. **尊重 SPA 生命週期，廢除點擊後的硬重載**：
+   - 當精確點擊頁碼數字按鈕（`button.next-pagination-item:text-is('2')`）成功後，確立「換頁事件已成功派發」。
+   - **給予 SPA 充足的過渡等待時間（3.5 秒）**，等待前端非同步請求與卡片重新渲染完成。
+   - 渲染完成後，自動平滑滾動回頁面頂部（`window.scrollTo({top: 0, behavior: 'smooth'})`），確保新載入的商品進入可視區。
+   - 立即回傳 `True` 進入第 2 頁之商品提取管線，**嚴格禁止**在點擊成功後再次調用破壞 SPA 狀態的 `page.goto()`！
+2. **URL Fallback 只在「找不到按鈕」時作為最後保險**：
+   - 只有在頁面上完全找不到任何分頁按鈕時，才執行 URL 導航。
+3. 遵循所有安全規範，更新日誌並附上查核標籤。
 
 
 ---
 
-## [2026-10-25 11:42] 階段三：解析 Gemini 外部對話紀錄與專案原始藍圖
+## [2026-10-25 20:44] 階段二十八：排查「找不到分析報告」問題、剔除無效伺服端 URL 參數與修復卡片選擇器
 
 ### 1. 使用者需求 (User Prompt)
-> `https://share.gemini.google/0640Y866ePHU`
+> 「我怎麼找不到分析報告？」（附帶終端日誌：執行 10 頁爬取，每頁均超時報錯 `Timeout waiting for product cards... resolved to <li class="site-nav-region-item">中国大陆</li>`，最終抓取商品數為 0，未生成分析簡報）
 
-### 2. AI 的理解與背景脈絡解析
-- 使用者提供了一個 Google Gemini 的對話分享連結。
-- 透過安全執行腳本 `test_safe_command.py` 結合本機 Edge 瀏覽器（`--headless=new --dump-dom --virtual-time-budget=12000`）成功擷取並解析該連結的完整 816 行對話文本（封存於 `docs/logs/extracted_conversation.txt`）。
-- **對話全貌與專案起源**：
-  1. **硬體評估階段**：使用者起初探討支援 900GB/s 頻寬與 256GB/384GB 以上的本地 AI 工作站架構（比較了 Mac Studio M5 Ultra 512GB、NVIDIA GB300、4x RTX PRO 6000、8x RTX 5090、以及 GLM-5.2 744B MoE 模型的推論速度與 Prefill 效能）。
-  2. **淘寶搜尋痛點**：使用者隨後要求 Gemini「幫我進淘宝搜索rtx3080比較價格」，並要求「模仿人類動作慢慢進入操作」。
-  3. **雲端限制與轉向本地**：Gemini 表明雲端環境無瀏覽器實體與滑鼠模擬能力，無法直接繞過淘寶 WAF 與滑塊驗證，進而為使用者規劃了一套**在本地 Antigravity 環境中透過 Playwright Stealth + 持久化 Session + Antigravity Skill 自建爬蟲 Agent** 的完整技術藍圖。
-  4. **核心功能規格**：
-     - 使用 `launch_persistent_context` 保持已登入之淘寶 Session/Cookie。
-     - 設置黑名單關鍵字防坑（過濾「定金」、「維修」、「壞卡」、「散熱器」、「外殼」、「回收」等引流假價格）。
-     - 設定價格區間過濾（1200 RMB ~ 4500 RMB）。
-     - 封裝成 Antigravity Skill（包含 `SKILL.md` 與自動化呼叫指令 `/taobao-rtx-hunter`）。
-
-### 3. 思考與架構對齊方案
-- 我們的 `TaobaoCrawlerAgent` 專案正是此藍圖的具體落地實作！
-- 我們目前的專案架構（`BrowserManager`、`ProductParser`、`DataExporter`、`TaobaoAgent`）與該藍圖完全吻合，且具備更高的模組化標準。
-- 下一步可為使用者：
-  1. 將 Gemini 對話中的淘寶比價與防坑過濾邏輯（引流價、黑名單關鍵字）整合進現有爬蟲解析器。
-  2. 在專案中封裝 `.agents/skills/taobao-rtx-hunter/`，讓使用者能在 Antigravity 中透過 `/taobao-rtx-hunter` 直接呼叫。
-
----
-
-## [2026-10-25 11:50] 階段四：依 Antigravity 規範配置 Playwright MCP Server
-
-### 1. 使用者需求 (User Prompt)
-> 「依照 Antigravity 規範，幫我在專案中配置好 Playwright MCP Server（使用 `npx -y @playwright/mcp@latest`）。」
-
-### 2. AI 的理解與 Antigravity 規範分析
-- 依據 Antigravity 自定義系統規範（`agy-customizations`），專案層級（Workspace-scoped）的 MCP 伺服器標準路徑為專案根目錄下的 `.agents/mcp_config.json`。
-- 本機原先設定包含 `@modelcontextprotocol/server-playwright`，使用者指定替換為微軟官方最新發布之 `@playwright/mcp@latest`。
-- 透過安全執行腳本 `test_safe_command.py` 驗證微軟官方 `@playwright/mcp@latest` 之 CLI 參數相容性，確認支援標準 stdio 傳輸協議與各項瀏覽器控制旗標。
-
-### 3. 思考與實作步驟
-1. 檢視與更新 `.agents/mcp_config.json`：
-   - 伺服器識別名稱：`playwright`
-   - 執行命令：`npx`
-   - 參數陣列：`["-y", "@playwright/mcp@latest"]`
-   - 超時設定：`timeoutSeconds: 600`（避免人工掃碼或頁面載入延遲導致逾時中斷）
-2. 保持 `test_safe_command.py` 乾淨重置。
-3. 遵循檔案邊界保護與無終端搜尋規則。
-
----
-
-## [2026-10-25 11:55] 階段五：指引 Antigravity IDE 介面中的 MCP 與工具設定位置
-
-### 1. 使用者需求 (User Prompt)
-> 「哪裡有Additional Options」（附帶 IDE 截圖）
-
-### 2. AI 的理解與截圖分析
-- 使用者根據前一輪說明尋找管理 MCP 伺服器的介面位置。
-- 檢視使用者截圖：
-  - 使用者目前位於 Antigravity IDE (基於 VS Code)。
-  - 右側 Chat 標頭的三個點選單顯示的是 Conversation 相關選項（Rename, Pin, Archive, Settings）。
-  - 中間已開啟 **Antigravity Settings** 分頁：
-    - 在 **General** 標籤下，清楚顯示了 **`Tool Permissions (9)`**（說明：*Modify permissions for file, terminal, and MCP tools.*），右側有 **`Open`** 按鈕。
-    - 左側 **Projects** 清單中亦有當前專案 **`TaobaoCrawlerAgent`**。
-- 說明目標：精準指引使用者透過中間已開啟的 Settings 分頁中的 `Tool Permissions [Open]`，或左側專案選項直接查看與管理 MCP 工具。
-
----
-
-## [2026-10-25 11:59] 階段六：說明 MCP Tools 權限設定頁面機制與伺服器載入方式
-
-### 1. 使用者需求 (User Prompt)
-> 「哪來清單？」（附帶 MCP Tools 空白規則設定介面截圖）
-
-### 2. AI 的理解與截圖分析
-- 使用者點進了 `Settings > General > Tool Permissions > MCP Tools`，發現下方沒有預設的工具清單。
-- **介面本質解析**：
-  1. 此畫面為 **「權限存取控制規則表 (Permission Rules)」**，用於手動設定針對特定 Tool 或 Server 的 `Allow`（允許）、`Deny`（拒絕）或 `Ask`（每次詢問）。
-  2. 因尚未手動新增過任何自定義放行/攔截規則，此處呈現空白是正常的。使用者若希望免授權直接使用，可在輸入框鍵入 `playwright` 並點擊 `Add`。
-- **MCP 伺服器生效與檢視方式**：
-  1. 專案的 `.agents/mcp_config.json` 是在當前交談（Conversation）進行中才建立的。
-  2. Antigravity 需在**新開交談**（點擊聊天視窗右上角的 `+`）或重新載入視窗（`Ctrl+Shift+P` -> `Reload Window`）時，才會初始化背景的 MCP Server 進程。
-  3. 伺服器啟動後，在聊天對話框輸入 `@` 即可看見由 MCP 注入的工具清單。
+### 2. AI 深度排查與根因診斷 (Root Cause Analysis)
+1. **為什麼分析報告沒有生成？**
+   - 檢視 `main.py` 邏輯：只有當 `result.top_recommendations` 有商品時才會調用 `export_markdown_report`。因為本次爬取共獲得 0 筆商品，直接走入 `No valid product items retrieved` 分支，因此未觸發報告產出。
+2. **為什麼商品數會是 0？（兩大致命原因）**：
+   - **致命原因一（URL 伺服端無效參數導致淘寶回傳 0 結果）**：
+     - 在先前的 `_build_search_url` 中，人為加入了 `cat=50024403&filter=reserve_price%5B1800%2C4500%5D`。
+     - 淘寶現代 PC 搜尋後端對 `filter=reserve_price[...]` 不相容（這是舊式手機端語法），當它與 `cat` 組合時，淘寶直接回傳「沒有找到相關的寶貝」或空白搜尋頁！
+   - **致命原因二（`[class*='item']` 誤匹配頂部導航區域下拉選單）**：
+     - 檢視 Playwright Call Log：`locator resolved to 20 elements. Proceeding with the first one: <li role="option" class="site-nav-region-item J_RegionItem">中国大陆</li>`。
+     - `wait_for_selector` 包含寬鬆的 `[class*='item']`，匹配到頁面最頂部隱藏的「地區選擇：中國大陸」下拉選單項目，導致等待逾時！
+   - **致命原因三（`card.inner_html()` 遺失根節點 `<a>` 標籤與 `href`）**：
+     - 當卡片本身是 `<a href="https://item.taobao.com/item.htm?id=...">` 時，呼叫 `inner_html()` 只拿到內部節點，遺失了最關鍵的鏈接資訊。
+3. **實作全面修復方案**：
+   - **還原純淨標準搜尋 URL (`_build_search_url`)**：
+     - 恢復為經實測穩定可靠的標準 URL：`https://s.taobao.com/search?q={keyword}&tab=all&page={page_no}&s={(page_no-1)*44}`。
+     - 把價格過濾與類目篩選完全交給本地強大的 `ProductParser.evaluate_relevance(min_price_floor=1800)` 處理，絕不在 URL 帶入會使淘寶後端失效的非官方參數。
+   - **精準修正卡片等待器與選擇器 (`search.py`)**：
+     - 徹底移除寬鬆的 `[class*='item']`，專注鎖定 `[class*='Content--content--']`、`[class*='Card--doubleCardWrapper--']` 與 `a[href*='item.taobao.com']`。
+     - 將 `card.inner_html()` 升級為 `await card.evaluate("el => el.outerHTML")`，完整保留所有節點屬性與 `href`。
+4. 遵循所有安全規範，更新日誌並附上查核標籤。

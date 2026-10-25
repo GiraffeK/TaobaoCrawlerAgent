@@ -17,3 +17,4 @@ def setup_logger():
     log_file = settings.base_dir / "logs" / "taobao_crawler_{time:YYYY-MM-DD}.log"
     logger.add(str(log_file), rotation="10 MB", retention="7 days", level="DEBUG", encoding="utf-8")
     return logger
+

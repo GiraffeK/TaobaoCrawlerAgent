@@ -23,3 +23,4 @@ def test_product_item_model():
     )
     assert item.title == "Wireless Bluetooth Mouse"
     assert item.price == 59.9
+

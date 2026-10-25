@@ -20,6 +20,7 @@ data/sessions/
 playwright-report/
 test-results/
 *.session
+.playwright-mcp/
 
 # Output & Cache
 data/outputs/*
@@ -35,3 +36,4 @@ htmlcov/
 .idea/
 *.swp
 *.swo
+

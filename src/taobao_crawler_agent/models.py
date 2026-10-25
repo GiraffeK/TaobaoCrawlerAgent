@@ -14,6 +14,11 @@ class ProductItem(BaseModel):
     location: Optional[str] = Field(None, description="Shipping origin location")
     detail_url: str = Field(..., description="Product page link")
     image_url: Optional[str] = Field(None, description="Thumbnail / main image URL")
+    real_sku: Optional[str] = Field(None, description="Actual SKU name inspected in detail page")
+    real_price: Optional[float] = Field(None, description="Actual verified price for the target SKU")
+    is_bait: bool = Field(False, description="Flag indicating suspected bait/fake price")
+    relevance_score: int = Field(default=100, description="Relevance score (0-100) indicating confidence it is the target product")
+    rejection_reason: Optional[str] = Field(None, description="Reason if marked not worthy or bait")
     extra_attributes: Dict[str, Any] = Field(default_factory=dict, description="Additional properties or badges")
 
 
@@ -24,6 +29,9 @@ class SearchQuery(BaseModel):
     sort_by: Optional[str] = Field(None, description="Sort order: default, sales, price_asc, price_desc")
     min_price: Optional[float] = None
     max_price: Optional[float] = None
+    min_price_floor: Optional[float] = Field(None, description="Minimum price floor to filter out bait accessories")
+    deep_sku: bool = Field(default=False, description="Whether to probe true SKU prices in detail page")
+    max_sku_inspections: int = Field(default=10, description="Max candidate products to deeply inspect SKU for")
 
 
 class AgentAnalysisResult(BaseModel):
@@ -33,3 +41,4 @@ class AgentAnalysisResult(BaseModel):
     top_recommendations: List[ProductItem] = Field(default_factory=list)
     summary: str = Field(..., description="Summary or decision reasoning from agent")
     price_range: Dict[str, float] = Field(default_factory=dict)
+

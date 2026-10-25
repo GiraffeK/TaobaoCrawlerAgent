@@ -4,7 +4,9 @@
       "command": "npx",
       "args": [
         "-y",
-        "@playwright/mcp@latest"
+        "@playwright/mcp@latest",
+        "--browser",
+        "msedge"
       ],
       "timeoutSeconds": 600
     }
