@@ -134,3 +134,20 @@
     - 在 **General** 標籤下，清楚顯示了 **`Tool Permissions (9)`**（說明：*Modify permissions for file, terminal, and MCP tools.*），右側有 **`Open`** 按鈕。
     - 左側 **Projects** 清單中亦有當前專案 **`TaobaoCrawlerAgent`**。
 - 說明目標：精準指引使用者透過中間已開啟的 Settings 分頁中的 `Tool Permissions [Open]`，或左側專案選項直接查看與管理 MCP 工具。
+
+---
+
+## [2026-10-25 11:59] 階段六：說明 MCP Tools 權限設定頁面機制與伺服器載入方式
+
+### 1. 使用者需求 (User Prompt)
+> 「哪來清單？」（附帶 MCP Tools 空白規則設定介面截圖）
+
+### 2. AI 的理解與截圖分析
+- 使用者點進了 `Settings > General > Tool Permissions > MCP Tools`，發現下方沒有預設的工具清單。
+- **介面本質解析**：
+  1. 此畫面為 **「權限存取控制規則表 (Permission Rules)」**，用於手動設定針對特定 Tool 或 Server 的 `Allow`（允許）、`Deny`（拒絕）或 `Ask`（每次詢問）。
+  2. 因尚未手動新增過任何自定義放行/攔截規則，此處呈現空白是正常的。使用者若希望免授權直接使用，可在輸入框鍵入 `playwright` 並點擊 `Add`。
+- **MCP 伺服器生效與檢視方式**：
+  1. 專案的 `.agents/mcp_config.json` 是在當前交談（Conversation）進行中才建立的。
+  2. Antigravity 需在**新開交談**（點擊聊天視窗右上角的 `+`）或重新載入視窗（`Ctrl+Shift+P` -> `Reload Window`）時，才會初始化背景的 MCP Server 進程。
+  3. 伺服器啟動後，在聊天對話框輸入 `@` 即可看見由 MCP 注入的工具清單。
