@@ -96,3 +96,24 @@
 - 下一步可為使用者：
   1. 將 Gemini 對話中的淘寶比價與防坑過濾邏輯（引流價、黑名單關鍵字）整合進現有爬蟲解析器。
   2. 在專案中封裝 `.agents/skills/taobao-rtx-hunter/`，讓使用者能在 Antigravity 中透過 `/taobao-rtx-hunter` 直接呼叫。
+
+---
+
+## [2026-10-25 11:50] 階段四：依 Antigravity 規範配置 Playwright MCP Server
+
+### 1. 使用者需求 (User Prompt)
+> 「依照 Antigravity 規範，幫我在專案中配置好 Playwright MCP Server（使用 `npx -y @playwright/mcp@latest`）。」
+
+### 2. AI 的理解與 Antigravity 規範分析
+- 依據 Antigravity 自定義系統規範（`agy-customizations`），專案層級（Workspace-scoped）的 MCP 伺服器標準路徑為專案根目錄下的 `.agents/mcp_config.json`。
+- 本機原先設定包含 `@modelcontextprotocol/server-playwright`，使用者指定替換為微軟官方最新發布之 `@playwright/mcp@latest`。
+- 透過安全執行腳本 `test_safe_command.py` 驗證微軟官方 `@playwright/mcp@latest` 之 CLI 參數相容性，確認支援標準 stdio 傳輸協議與各項瀏覽器控制旗標。
+
+### 3. 思考與實作步驟
+1. 檢視與更新 `.agents/mcp_config.json`：
+   - 伺服器識別名稱：`playwright`
+   - 執行命令：`npx`
+   - 參數陣列：`["-y", "@playwright/mcp@latest"]`
+   - 超時設定：`timeoutSeconds: 600`（避免人工掃碼或頁面載入延遲導致逾時中斷）
+2. 保持 `test_safe_command.py` 乾淨重置。
+3. 遵循檔案邊界保護與無終端搜尋規則。
