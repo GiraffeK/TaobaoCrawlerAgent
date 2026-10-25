@@ -1,0 +1,37 @@
+# Byte-compiled / optimized / DLL files
+__pycache__/
+*.py[cod]
+*$py.class
+
+# Virtual Environments
+.venv/
+env/
+venv/
+ENV/
+
+# Environment Variables & Secrets
+.env
+.env.local
+*.pem
+*.key
+
+# Browser Automation & Session Data
+data/sessions/
+playwright-report/
+test-results/
+*.session
+
+# Output & Cache
+data/outputs/*
+!data/outputs/.gitkeep
+logs/
+*.log
+.pytest_cache/
+.coverage
+htmlcov/
+
+# IDE & Editor files
+.vscode/
+.idea/
+*.swp
+*.swo
