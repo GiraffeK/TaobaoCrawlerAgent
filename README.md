@@ -100,6 +100,7 @@ python main.py search "rtx3080" --pages 10 --max-sku 100 --deep-sku --min-price 
 
 # 顯示瀏覽器視窗以即時觀察過程
 python main.py search "機械鍵盤" --no-headless
+python main.py search "rtx3080" --pages 10 --max-sku 100 --deep-sku --min-price 1800 --no-headless
 
 # 匯出為 JSON 格式
 python main.py search "咖啡機" --format json

@@ -69,3 +69,40 @@
      - 徹底移除寬鬆的 `[class*='item']`，專注鎖定 `[class*='Content--content--']`、`[class*='Card--doubleCardWrapper--']` 與 `a[href*='item.taobao.com']`。
      - 將 `card.inner_html()` 升級為 `await card.evaluate("el => el.outerHTML")`，完整保留所有節點屬性與 `href`。
 4. 遵循所有安全規範，更新日誌並附上查核標籤。
+
+
+---
+
+## [2026-10-25 22:00] 階段二十九：專案全功能版本交付並推送至遠端 GitHub 倉庫
+
+### 1. 使用者需求 (User Prompt)
+> 「please git push to github GiraffeK/TaobaoCrawlerAgent: TaobaoCrawlerAgent-幫忙快速比對想要的商品價格 (https://github.com/GiraffeK/TaobaoCrawlerAgent)」
+
+### 2. 實作變更與交付成果
+1. **設定遠端倉庫（Remote Configuration）**：
+   - 經安全檢查，確認本機目前為 `main` 分支。
+   - 新增遠端 `origin` 為 `https://github.com/GiraffeK/TaobaoCrawlerAgent.git`。
+2. **敏感資訊與快取保護過濾 (`.gitignore`)**：
+   - 確保 `.gitignore` 完整過濾 `.venv/`、`data/sessions/`（避免使用者 Cookie 外洩）、`data/outputs/*` 與 `.playwright-mcp/` 暫存目錄。
+3. **版本提交與推送（Commit & Push）**：
+   - 暫存腳本依規範清空為 `# test_safe_command.py - cleaned after execution as per guidelines`。
+   - 提交 Commit `[main 160f598]`：`feat: complete TaobaoCrawlerAgent with anti-bait scoring, human mouse trajectories, and buyer intelligence report`。
+   - 成功推送至 GitHub：`https://github.com/GiraffeK/TaobaoCrawlerAgent.git`，並將本機 `main` 設為追蹤 `origin/main`。
+4. 遵循所有安全規範，更新日誌並附上查核標籤。
+
+
+---
+
+## [2026-10-25 22:13] 階段三十：同步更新與清理、推送最新變更至遠端 GitHub 倉庫
+
+### 1. 使用者需求 (User Prompt)
+> 「please git push to github」
+
+### 2. 實作變更與交付成果
+1. **變更檢查**：
+   - 使用者編輯了 `README.md`，並清理了 `data/` 下之暫存測試圖片（`rtx3080_search.png`, `taobao_home.png`）。
+2. **提交與推送**：
+   - 暫存腳本依規範清空為 `# test_safe_command.py - cleaned after execution as per guidelines`。
+   - 執行 `git add -A` 與 `git commit -m "docs: update README documentation and clean test assets"`。
+   - 執行 `git push origin main` 將所有最新變更同步至 GitHub。
+3. 遵循所有安全規範，更新日誌並附上查核標籤。
