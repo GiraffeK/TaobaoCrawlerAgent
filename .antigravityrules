@@ -1,0 +1,11 @@
+# Agent Rules & Guidelines
+
+## 核心工作規範
+1. **規範遵從與查核證明**：在每次結束任務時，明確說明並證明遵守了專案準則，於回覆結尾附上標準履約查核標籤。
+2. **全程開發日誌記錄**：從接收 prompt、理解、分析、思考到解決方案與執行步驟，均記錄至 `development-log.md`。當日誌過長時依輪替機制歸檔至 `docs/logs/`。
+3. **任務公告欄 (Bulletin)**：維護 `Bulletin.json`。當遇到需要其他 Agent / Skills / Tools / API / MCP 支援時，以 JSON 格式記錄支援請求（含 timestamp），完成時回填狀態與解決方案形成閉環。
+4. **檔案管理授權與邊界限制**：在工作目錄下允許檔案管理操作，不用再問。但嚴禁修改或刪除 `.git/`、模型權重目錄（如 `C:\models\` 或本機 weight 路徑）及敏感憑證金鑰。
+5. **終端機指令防彈原則 (避免干擾工作流)**：
+   a. **禁止使用終端機進行檔案與字串搜尋**：遇到類似 `Select-String`、`Get-ChildItem`、`git grep`、`dir /s` 等搜尋需求，優先使用內建原生工具；若需程式化列舉，透過 `test_safe_command.py`。
+   b. **所有單行測試與查詢統一寫入 `test_safe_command.py`**：禁止在終端機直接跑單行指令（如 `python -c "..."` 或 ad-hoc shell 查詢）。請一律覆寫至專案根目錄的 `test_safe_command.py`，並只執行固定的 `python test_safe_command.py`。
+6. **持續對話迭代**：與使用者保持互動，持續優化並維護本規範與相關文件架構。
