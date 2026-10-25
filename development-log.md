@@ -68,3 +68,31 @@
 3. **建立 `test_safe_command.py`**：提供安全執行的樣板腳本，避免終端單行執行觸發不必要的中斷。
 4. **檢查並同步 `.antigravityrules`**：確保系統級規則包含 5a (禁止終端機搜尋) 與 5b (單行查詢轉移至 test_safe_command.py)。
 5. **落實履約證明查核標籤**：於每則回覆末尾生成包含 6 項準則遵循狀態的 Markdown 標籤塊。
+
+
+---
+
+## [2026-10-25 11:42] 階段三：解析 Gemini 外部對話紀錄與專案原始藍圖
+
+### 1. 使用者需求 (User Prompt)
+> `https://share.gemini.google/0640Y866ePHU`
+
+### 2. AI 的理解與背景脈絡解析
+- 使用者提供了一個 Google Gemini 的對話分享連結。
+- 透過安全執行腳本 `test_safe_command.py` 結合本機 Edge 瀏覽器（`--headless=new --dump-dom --virtual-time-budget=12000`）成功擷取並解析該連結的完整 816 行對話文本（封存於 `docs/logs/extracted_conversation.txt`）。
+- **對話全貌與專案起源**：
+  1. **硬體評估階段**：使用者起初探討支援 900GB/s 頻寬與 256GB/384GB 以上的本地 AI 工作站架構（比較了 Mac Studio M5 Ultra 512GB、NVIDIA GB300、4x RTX PRO 6000、8x RTX 5090、以及 GLM-5.2 744B MoE 模型的推論速度與 Prefill 效能）。
+  2. **淘寶搜尋痛點**：使用者隨後要求 Gemini「幫我進淘宝搜索rtx3080比較價格」，並要求「模仿人類動作慢慢進入操作」。
+  3. **雲端限制與轉向本地**：Gemini 表明雲端環境無瀏覽器實體與滑鼠模擬能力，無法直接繞過淘寶 WAF 與滑塊驗證，進而為使用者規劃了一套**在本地 Antigravity 環境中透過 Playwright Stealth + 持久化 Session + Antigravity Skill 自建爬蟲 Agent** 的完整技術藍圖。
+  4. **核心功能規格**：
+     - 使用 `launch_persistent_context` 保持已登入之淘寶 Session/Cookie。
+     - 設置黑名單關鍵字防坑（過濾「定金」、「維修」、「壞卡」、「散熱器」、「外殼」、「回收」等引流假價格）。
+     - 設定價格區間過濾（1200 RMB ~ 4500 RMB）。
+     - 封裝成 Antigravity Skill（包含 `SKILL.md` 與自動化呼叫指令 `/taobao-rtx-hunter`）。
+
+### 3. 思考與架構對齊方案
+- 我們的 `TaobaoCrawlerAgent` 專案正是此藍圖的具體落地實作！
+- 我們目前的專案架構（`BrowserManager`、`ProductParser`、`DataExporter`、`TaobaoAgent`）與該藍圖完全吻合，且具備更高的模組化標準。
+- 下一步可為使用者：
+  1. 將 Gemini 對話中的淘寶比價與防坑過濾邏輯（引流價、黑名單關鍵字）整合進現有爬蟲解析器。
+  2. 在專案中封裝 `.agents/skills/taobao-rtx-hunter/`，讓使用者能在 Antigravity 中透過 `/taobao-rtx-hunter` 直接呼叫。
