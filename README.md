@@ -96,6 +96,7 @@ python main.py login
 ```bash
 # 預設無頭模式搜尋商品並輸出 CSV
 python main.py search "人體工學椅"
+python main.py search "rtx3080" --pages 10 --max-sku 100 --deep-sku --min-price 1800 --no-headless
 
 # 顯示瀏覽器視窗以即時觀察過程
 python main.py search "機械鍵盤" --no-headless
