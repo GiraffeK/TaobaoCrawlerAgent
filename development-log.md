@@ -117,3 +117,20 @@
    - 超時設定：`timeoutSeconds: 600`（避免人工掃碼或頁面載入延遲導致逾時中斷）
 2. 保持 `test_safe_command.py` 乾淨重置。
 3. 遵循檔案邊界保護與無終端搜尋規則。
+
+---
+
+## [2026-10-25 11:55] 階段五：指引 Antigravity IDE 介面中的 MCP 與工具設定位置
+
+### 1. 使用者需求 (User Prompt)
+> 「哪裡有Additional Options」（附帶 IDE 截圖）
+
+### 2. AI 的理解與截圖分析
+- 使用者根據前一輪說明尋找管理 MCP 伺服器的介面位置。
+- 檢視使用者截圖：
+  - 使用者目前位於 Antigravity IDE (基於 VS Code)。
+  - 右側 Chat 標頭的三個點選單顯示的是 Conversation 相關選項（Rename, Pin, Archive, Settings）。
+  - 中間已開啟 **Antigravity Settings** 分頁：
+    - 在 **General** 標籤下，清楚顯示了 **`Tool Permissions (9)`**（說明：*Modify permissions for file, terminal, and MCP tools.*），右側有 **`Open`** 按鈕。
+    - 左側 **Projects** 清單中亦有當前專案 **`TaobaoCrawlerAgent`**。
+- 說明目標：精準指引使用者透過中間已開啟的 Settings 分頁中的 `Tool Permissions [Open]`，或左側專案選項直接查看與管理 MCP 工具。
